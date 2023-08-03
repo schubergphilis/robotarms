@@ -1,0 +1,17 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["./tsconfig.json"]
+  },
+  "plugins": [
+      "@typescript-eslint"
+  ],
+  "extends": [
+      "plugin:@typescript-eslint/recommended",
+      "plugin:@typescript-eslint/recommended-type-checked",
+      "plugin:@typescript-eslint/stylistic-type-checked"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unsafe-enum-comparison": "off"
+  }
+}

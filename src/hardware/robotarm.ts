@@ -1,4 +1,5 @@
 import { ConnectBox } from './connectbox';
+import { wait } from '../utils'
 
 export interface IPosition {
   X: number;
@@ -9,16 +10,17 @@ export interface IPosition {
   C: number;
 }
 
-
-
 export enum Axis {
   X = 'X',
   Y = 'Y',
-  Z = 'Z'
+  Z = 'Z',
+  A = 'A',
+  B = 'B',
+  C = 'C'
 }
 
 export class RobotArm {
-  constructor(private connectBox: ConnectBox) {}
+  constructor(public connectBox: ConnectBox) {}
 
   public goToCoordinateAbsolute(position: IPosition): Promise<unknown> {
     return this.connectBox.send(`M20 G90 G01 ${this.convertPositionToString(position)} F2000.00`);
@@ -48,19 +50,29 @@ export class RobotArm {
     return this.connectBox.send('M3 S0', false);
   }
 
-  public home(): Promise<unknown> {
-    return this.connectBox.send('$H');
+  public async home() {
+    await this.connectBox.send('M50', false, false);
+    await this.connectBox.send('$H');
+    // Waiting another 1000ms hopefully prevents bug of weird movement that sometimes
+    // occurs when sending a command right after homing
+    return wait(1000);
   }
 
-  public send(cmd: string): Promise<unknown> {
-    return this.connectBox.send(cmd);
+  public goToZero() {
+    return this.goToAngle({ X: 0, Y: 0, Z: 0, A: 0, B: 0, C: 0 });
+  }
+
+  public waitForIdle(): Promise<void> {
+    return this.connectBox.waitForIdle()
   }
 
   private convertPositionToString(position: Partial<IPosition>): string {
     let str = ''
-    Object.keys(position).forEach((axis) => {
-      str += `${axis}${(position as any)[axis]} `
+
+    Object.entries(position).forEach(([axis, value]) => {
+      str += `${axis}${value} `
     })
+
     return str;
   }
 }

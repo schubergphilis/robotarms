@@ -2,12 +2,12 @@ import { ConnectBox } from './connectbox';
 import { EventEmitter } from 'events';
 
 export class PhotonicSensor {
-  public detected: boolean = false;
+  public detected = false;
   public readonly event = new EventEmitter();
 
   constructor(private connectBox: ConnectBox) {
     setInterval(() => {
-      this.connectBox.port.write('O131?\n')
+      this.connectBox.client.send('O131?\n', true)
     }, 250)
 
     this.connectBox.dataEmitter.on('data', (data: string) => {

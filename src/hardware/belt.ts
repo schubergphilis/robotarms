@@ -1,10 +1,21 @@
-import { ConnectBox } from './connectbox';
+import { ConnectBox, State, IStatus } from './connectbox';
 
 export class Belt {
-  constructor(private connectBox: ConnectBox) {}
+  private angle = 0;
+
+  constructor(private connectBox: ConnectBox) {
+    connectBox.stateEmitter.on('status', (status: IStatus) => {
+      if (status.state === State.IDLE) {
+        this.angle = status.angle.D;
+      }
+    });
+  }
+
+  public waitForIdle(): Promise<void> {
+    return this.connectBox.waitForIdle()
+  }
 
   public move(distance: number, speed = 2000) {
-    // console.log(`G91 G01 D${distance} F${speed}`)
-    return this.connectBox.send(`G91 G01 D${distance} F${speed}`)
+    return this.connectBox.send(`G90 G01 D${this.angle + distance} F${speed}`);
   }
 }

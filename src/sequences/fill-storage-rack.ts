@@ -1,0 +1,54 @@
+import { EventEmitter } from 'events';
+import { RobotArm, Axis } from '../hardware/robotarm';
+import { Slider } from '../hardware/slider';
+import { Storage } from '../helpers/storage';
+
+const slides = [80, 137, 190];
+const itemsPerSlide = 4;
+
+export enum Events {
+  STARTED = 'STARTED',
+  STORED_ITEM = 'STORED_ITEM',
+  FINISHED = 'FINISHED',
+}
+
+export abstract class FillStorageRackSequence {
+  static events = new EventEmitter();
+
+  static async run(arm: RobotArm, slider: Slider): Promise<void> {
+    // Notify we started
+    this.events.emit(Events.STARTED);
+
+    // Counter used in the items loop to determine storage location
+    let storageIndex = 0;
+
+    // Go to each slide and empty it
+    for (const slide of slides) {
+
+      // For all items in the slide move them back into the storage rack
+      for (let j = 0; j < itemsPerSlide; j++) {
+        await slider.moveTo(slide);
+
+        // Move to the pick up position, lower the arm, turn on suction and raise the block
+        await arm.goToCoordinateAbsolute({ X: -226.34, Y: 109.99, Z: 107, A: -5.00, B: 25.00, C: 0.00 })
+        await arm.moveAxisRelative(Axis.Z, -50);
+        await arm.turnOnSuctionCup();
+        await arm.moveAxisRelative(Axis.Z, 50);
+
+        // await arm.goToAngle({ X: 90, Y: 36, Z: 43, A: 0, B: 169, C: 0 });
+
+        // Have storage store the item
+        await Storage.storeItem(arm, slider, storageIndex);
+
+        // Reset the arm
+        await arm.goToAngle({ X: 0, Y: 0, Z: 0, A: 0, B: 0, C: 0 });
+        storageIndex++;
+
+        this.events.emit(Events.STORED_ITEM);
+      }
+    }
+
+    // Notify we are done
+    this.events.emit(Events.FINISHED);
+  }
+}

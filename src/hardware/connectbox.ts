@@ -1,6 +1,5 @@
-import { SerialPort } from 'serialport';
-import { DelimiterParser } from '@serialport/parser-delimiter';
 import { EventEmitter } from 'events';
+import { IClient, SerialClient, NetClient } from './clients'
 
 export interface IStatus {
   state: string,
@@ -23,10 +22,45 @@ export interface IStatus {
   }
 }
 
+export interface IConfig {
+  logCommands?: boolean;
+}
+
+/**
+ * Used to connect over TCP. Used when the connectbox is available on the network.
+ * Connected to the raspberry pi using Ser2Net for example. Example config:
+ * {
+ *   host: 'robotarm.local',
+ *   port: 3000
+ * }
+ */
+export interface INetConfig extends IConfig {
+  host: string;
+  port: number;
+}
+
+/**
+ * Used to connect directly over a USB/Serial connection when running
+ * locally for example. Example config:
+ * {
+ *   path: '/dev/tty.usbserial-14310',
+ *   baudRate: 115200
+ * }
+ */
+export interface ISerialConfig extends IConfig {
+  path: string;
+  baudRate: number;
+}
+
+export enum State {
+  HOME = 'Home',
+  IDLE = 'Idle',
+  HOLD = 'Hold',
+  RUN = 'Run'
+}
 
 export class ConnectBox {
-  public port: SerialPort;
-  private parser: any;
+  public readonly client: IClient;
   protected status?: IStatus;
 
   public readonly dataEmitter = new EventEmitter();
@@ -34,60 +68,82 @@ export class ConnectBox {
   public statusEmitter = new EventEmitter();
   private okEmitter = new EventEmitter();
 
-  constructor(port: string, baudRate = 115200) {
-    this.port = new SerialPort({ path: port, baudRate, stopBits: 1, dataBits: 8 });
-    this.parser = this.port.pipe(new DelimiterParser({ delimiter: '\n' }));
+  constructor(config: ISerialConfig | INetConfig) {
+    if ('path' in config) {
+      this.client = new SerialClient(config);
+    } else {
+      this.client = new NetClient(config);
+    }
 
     // When receiving data, what todo
-    this.parser.on('data', (data: Buffer) => {
+    this.client.events.on('data', (data: Buffer) => {
       const str = data.toString();
       this.dataEmitter.emit('data', str);
+      // logger.debug(str);
 
       // Status update
       if (str.startsWith('<')) {
         this.status = ConnectBox.parseStatus(str)
         this.statusEmitter.emit('status', this.status);
         this.stateEmitter.emit(this.status.state)
-      // Command received, ready for next one
       } else if (str.indexOf('ok') > -1) {
         this.okEmitter.emit('ok');
       }
     })
   }
 
-  public send(cmd: string, wait = true): Promise<void> {
+  get idle(): boolean {
+    return this.status?.state === State.IDLE || this.status?.state === undefined;
+  }
+
+  public send(cmd: string, wait = true, waitForConfirmation = true): Promise<void> {
     return new Promise((resolve, reject) => {
       // Current state is no
-      if (this.status && this.status.state !== 'Idle') {
-        console.log('Current state is not Idle')
+      if (this.status && this.status.state !== State.IDLE) {
         reject('Current state is not Idle, did you wait for the previous command to finish?');
       } else if (wait === true) {
         // Start polling for status updates
-        // console.log('Waiting for Idle state');
         const interval = setInterval(() => {
-          // Write directly to the port instead using ConnectBox.write to prevent excessive logging
-          this.port.write('?\n')
+          this.client.send('?', true) // Silent to prevent excessive logging
         }, 100)
 
         // Once we receive the Idle state, we consider the command that was executed to be finished
-        this.stateEmitter.once('Idle', () => {
-          // console.log('Idle state received');
+        this.stateEmitter.once(State.IDLE, () => {
           clearInterval(interval)
           resolve()
         })
 
         // Send the command
-        this.write(cmd);
-      } else if (wait === false) {
+        this.client.send(cmd);
+      } else if (wait === false && waitForConfirmation === true) {
         this.okEmitter.once('ok', resolve);
-        this.write(cmd)
+        this.client.send(cmd);
+      } else if (wait === false && waitForConfirmation === false) {
+        this.client.send(cmd);
+        resolve()
       }
     })
   }
 
-  private write(cmd: string) {
-    // console.log(`Command send: ${cmd}`)
-    this.port.write(cmd + '\n');
+  public stop() {
+    this.client.send('!\n');
+  }
+
+  public waitForIdle(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.idle === true) {
+        resolve();
+      } else {
+        // TODO IMPLEMENT A TIMEOUT?
+        this.stateEmitter.once('Idle', resolve)
+      }
+    });
+  }
+
+  public static async create(config: ISerialConfig | INetConfig): Promise<ConnectBox> {
+    const box = new ConnectBox(config);
+    await box.client.connect();
+    return box;
   }
 
   private static parseStatus(status: string): IStatus {
