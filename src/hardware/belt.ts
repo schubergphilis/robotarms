@@ -4,7 +4,7 @@ export class Belt {
   private angle = 0;
 
   constructor(private connectBox: ConnectBox) {
-    connectBox.stateEmitter.on('status', (status: IStatus) => {
+    connectBox.statusEmitter.on('status', (status: IStatus) => {
       if (status.state === State.IDLE) {
         this.angle = status.angle.D;
       }

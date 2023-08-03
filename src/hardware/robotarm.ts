@@ -51,7 +51,7 @@ export class RobotArm {
   }
 
   public async home() {
-    await this.connectBox.send('M50', false, false);
+    // await this.connectBox.send('M50', false, false);
     await this.connectBox.send('$H');
     // Waiting another 1000ms hopefully prevents bug of weird movement that sometimes
     // occurs when sending a command right after homing

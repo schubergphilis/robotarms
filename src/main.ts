@@ -15,14 +15,14 @@ import { ColorDetectionCamera } from './hardware/color-camera';
     logger.setLogLevel(LogLevel.Debug)
 
     // Use serial connections
-    // const boxOne = await ConnectBox.create({ path: '/dev/tty.usbserial-14310', baudRate: 115200 });
-    // const boxTwo = await ConnectBox.create({ path: '/dev/tty.usbserial-14210', baudRate: 115200 });
-    // const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
+    const boxOne = await ConnectBox.create({ path: '/dev/tty.usbserial-14310', baudRate: 115200 });
+    const boxTwo = await ConnectBox.create({ path: '/dev/tty.usbserial-14210', baudRate: 115200 });
+    const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
 
     // Use network connections
-    const boxOne = await ConnectBox.create({ host: '10.32.16.1', port: 3001 });
-    const boxTwo = await ConnectBox.create({ host: '10.32.16.1', port: 3000 });
-    const colorDetectionCamera = await ColorDetectionCamera.create({ host: '10.32.16.1', port: 3002 });
+    // const boxOne = await ConnectBox.create({ host: '10.32.16.1', port: 3001 });
+    // const boxTwo = await ConnectBox.create({ host: '10.32.16.1', port: 3000 });
+    // const colorDetectionCamera = await ColorDetectionCamera.create({ host: '10.32.16.1', port: 3002 });
 
     // Initialise hardware abstractions
     const armOne = new RobotArm(boxOne);
@@ -34,8 +34,6 @@ import { ColorDetectionCamera } from './hardware/color-camera';
     // On exit of the process, at least turn off the suction cups
     process.on('SIGINT', () => {
       logger.debug('Received SIGINT, exiting....');
-      boxOne.client.send('!', true); // Stops all movement
-      boxTwo.client.send('!', true);
       boxOne.client.send('M3 S0', true); // Turns off the suction cup
       boxTwo.client.send('M3 S0', true);
       process.exit();
