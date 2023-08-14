@@ -7,15 +7,15 @@ const rowSpacing = 82;
 
 
 // const sliderPositionZero = 155;
-const pickupPosition = { X: 168, Y: 0, Z: 52, A: 0, B: -90, C: 0};
-const pickUpDistance = 55;
+const pickupPosition = { X: 168, Y: 0, Z: 43.5, A: 0, B: -90, C: 0};
+const pickUpDistance = 52;
 
 export abstract class Storage {
   public static readonly columnCount = 6; // Number of columns in the storage rack
   public static readonly columnSpacing = 40; // Distance between columns
   public static readonly rowSpacing = 82 // Distance between rows
 
-  public static readonly sliderPositionColumnZero = 155;
+  public static readonly sliderPositionColumnZero = 157;
 
   public static async retrieveItem(arm: RobotArm, slider: Slider, index: number) {
     const row = Storage.calculateRow(index);
@@ -45,17 +45,22 @@ export abstract class Storage {
     await slider.moveTo(Storage.calculateSliderPosition(column));
     await arm.goToCoordinateAbsolute({ ...pickupPosition, Z: Storage.calculateHeightPosition(row)});
 
-    // Testing
+    /* Rotate the arm/block, this improves accuracy
+     * - Helps with the angle the block has to the arm after picking up
+     * - It flips X/Y so to say, turning the excessive play in the slide and therefore
+     *   accuracy into vertical play instead of horizontal play
+     */
     await arm.connectBox.send('M21 G91 C-90')
 
     // Raise the arm slightly, move into the storage position, lower, turn off suction and back off
+    const forwardDistance = 47;
     await arm.moveAxisRelative(Axis.Z, 15)
-    await arm.moveAxisRelative(Axis.X, pickUpDistance)
+    await arm.moveAxisRelative(Axis.X, forwardDistance)
     await arm.moveAxisRelative(Axis.Z, -15)
     await arm.turnOffSuctionCup()
-    await arm.moveAxisRelative(Axis.X, -pickUpDistance)
+    await arm.moveAxisRelative(Axis.X, -forwardDistance)
 
-    // Testing
+    // Rotate back, see comments above
     await arm.connectBox.send('M21 G91 C90')
   }
 

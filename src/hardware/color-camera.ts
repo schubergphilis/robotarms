@@ -51,6 +51,7 @@ export class ColorDetectionCamera {
     });
   }
 
+  // Factory function to combine creation and asynchronous connection setup
   public static async create(config: INetClientConfig | ISerialClientConfig): Promise<ColorDetectionCamera> {
     const camera = new ColorDetectionCamera(config);
     await camera.client.connect();

@@ -68,7 +68,7 @@ export class ConnectBox {
   public statusEmitter = new EventEmitter();
   private okEmitter = new EventEmitter();
 
-  constructor(config: ISerialConfig | INetConfig) {
+  constructor(config: ISerialConfig | INetConfig, private logCommands = false) {
     if ('path' in config) {
       this.client = new SerialClient(config);
     } else {
@@ -114,12 +114,12 @@ export class ConnectBox {
         })
 
         // Send the command
-        this.client.send(cmd);
+        this.client.send(cmd, !this.logCommands);
       } else if (wait === false && waitForConfirmation === true) {
         this.okEmitter.once('ok', resolve);
-        this.client.send(cmd);
+        this.client.send(cmd, !this.logCommands);
       } else if (wait === false && waitForConfirmation === false) {
-        this.client.send(cmd);
+        this.client.send(cmd, !this.logCommands);
         resolve()
       }
     })
@@ -140,8 +140,9 @@ export class ConnectBox {
     });
   }
 
-  public static async create(config: ISerialConfig | INetConfig): Promise<ConnectBox> {
-    const box = new ConnectBox(config);
+  // Factory function to combine creation and asynchronous connection setup
+  public static async create(config: ISerialConfig | INetConfig, logCommands = false): Promise<ConnectBox> {
+    const box = new ConnectBox(config, logCommands);
     await box.client.connect();
     return box;
   }

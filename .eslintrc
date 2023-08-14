@@ -12,6 +12,8 @@
       "plugin:@typescript-eslint/stylistic-type-checked"
   ],
   "rules": {
-    "@typescript-eslint/no-unsafe-enum-comparison": "off"
+    "@typescript-eslint/no-unsafe-enum-comparison": "off",
+    "@typescript-eslint/no-misused-promises": "off",
+    "@typescript-eslint/no-floating-promises": "off"
   }
 }

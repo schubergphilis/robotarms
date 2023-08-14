@@ -46,15 +46,18 @@ export class RobotArm {
     return this.connectBox.send('M3 S1000', false);
   }
 
+  public turnOnBlowSuctionCup() {
+    return this.connectBox.send('M3 S500', false);
+  }
+
   public turnOffSuctionCup() {
     return this.connectBox.send('M3 S0', false);
   }
 
   public async home() {
-    // await this.connectBox.send('M50', false, false);
     await this.connectBox.send('$H');
-    // Waiting another 1000ms hopefully prevents bug of weird movement that sometimes
-    // occurs when sending a command right after homing
+    // Sending commands to quickly after homing seems to cause weird behavior
+    // adding an artificial delay to prevent issues
     return wait(1000);
   }
 

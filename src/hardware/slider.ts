@@ -13,6 +13,6 @@ export class Slider {
   }
 
   public moveTo(position: number): Promise<unknown> {
-    return this.connectBox.send(`G90 G01 D${position} F2000`)
+    return this.connectBox.send(`G90 G01 D${position} F1800`)
   }
 }

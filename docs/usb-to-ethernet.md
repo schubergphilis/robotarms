@@ -16,22 +16,17 @@ The configuration should be put in: `/etc/ser2net.yaml`.
 Below configuration will expose both connectboxes and a camera:
 
 ```
-# This is a ser2net configuration file, tailored to be rather
-# simple.
-#
-# Find detailed documentation in ser2net.yaml(5)
-# A fully featured configuration file is in
-# /usr/share/doc/ser2net/examples/ser2net.yaml.gz
-#
-# If you find your configuration more useful than this very simple
-# one, please submit it as a bugreport
-
 connection: &con0192
     accepter: tcp,3000
     enable: on
     options:
+      banner: ''
       kickolduser: true
       telnet-brk-on-sync: true
+      sendon: '\n'
+      openstr: ''
+      closestr: ''
+      signature: ''
     connector: serialdev,
               /dev/ttyUSB0,
               115200n81,local
@@ -40,8 +35,13 @@ connection: &con1192
     accepter: tcp,3001
     enable: on
     options:
+      banner: ''
       kickolduser: true
       telnet-brk-on-sync: true
+      sendon: '\n'
+      openstr: ''
+      closestr: ''
+      signature: ''
     connector: serialdev,
               /dev/ttyUSB1,
               115200n81,local

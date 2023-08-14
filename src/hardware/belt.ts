@@ -15,7 +15,7 @@ export class Belt {
     return this.connectBox.waitForIdle()
   }
 
-  public move(distance: number, speed = 2000) {
-    return this.connectBox.send(`G90 G01 D${this.angle + distance} F${speed}`);
+  public move(distance: number) {
+    return this.connectBox.send(`G91 G01 D${distance} F1800`);
   }
 }

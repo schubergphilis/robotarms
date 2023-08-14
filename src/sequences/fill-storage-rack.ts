@@ -3,7 +3,9 @@ import { RobotArm, Axis } from '../hardware/robotarm';
 import { Slider } from '../hardware/slider';
 import { Storage } from '../helpers/storage';
 
-const slides = [80, 137, 190];
+// These numbers correspond with the postion of the slider to pick up the items from the slide.
+// So if you need to move/calibrate parallel to the slides, adjust these numbers
+const slides = [75.5, 138, 205.5];
 const itemsPerSlide = 4;
 
 export enum Events {
@@ -30,12 +32,11 @@ export abstract class FillStorageRackSequence {
         await slider.moveTo(slide);
 
         // Move to the pick up position, lower the arm, turn on suction and raise the block
-        await arm.goToCoordinateAbsolute({ X: -226.34, Y: 109.99, Z: 107, A: -5.00, B: 25.00, C: 0.00 })
-        await arm.moveAxisRelative(Axis.Z, -50);
+        await arm.goToCoordinateAbsolute({ X: -222, Y: 110, Z: 48, A: -5.00, B: 25.00, C: 0.00 })
+        await arm.moveAxisRelative(Axis.Z, -6);
         await arm.turnOnSuctionCup();
-        await arm.moveAxisRelative(Axis.Z, 50);
-
-        // await arm.goToAngle({ X: 90, Y: 36, Z: 43, A: 0, B: 169, C: 0 });
+        await arm.moveAxisRelative(Axis.Z, 6);
+        await arm.goToCoordinateAbsolute({ X: -222, Y: 110, Z: 120, A: -5.00, B: 25.00, C: 0.00 })
 
         // Have storage store the item
         await Storage.storeItem(arm, slider, storageIndex);

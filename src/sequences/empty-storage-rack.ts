@@ -3,12 +3,11 @@ import { Axis, RobotArm } from "../hardware/robotarm";
 import { EventEmitter } from 'events';
 import { logger } from '../logger';
 import { Storage } from "../helpers/storage";
+import { wait } from '../utils';
 
 const columnCount = 6;
 const rowCount = 2;
-
-const sliderPositionZero = 153;
-const pickupPosition = { X: 198, Y: 0, Z: 52, A: 0, B: -90, C: 0};
+const pickupPosition = { X: 198, Y: 0, Z: 42, A: 0, B: -90, C: 0};
 
 export enum Events {
   STARTED = 'STARTED',
@@ -32,10 +31,6 @@ export abstract class EmptyStorageRackSequence {
       .sort((a, b) => a.sort - b.sort)
       .map(({ value }) => value)
 
-    // Move the arm into the initial pickup position
-    await arm.goToCoordinateAbsolute(pickupPosition)
-    await slider.moveTo(sliderPositionZero)
-
     // Loop the array with indexes and start pickup up the blocks
     for (const index of itemIndexes) {
       await EmptyStorageRackSequence.pickupIndex(index, arm, slider);
@@ -44,8 +39,6 @@ export abstract class EmptyStorageRackSequence {
     // Signal that we are done
     logger.info('Finished storage rack sequence');
     this.events.emit(Events.FINISHED);
-
-    return;
   }
 
   private static async pickupIndex(index: number, arm: RobotArm, slider: Slider): Promise<void> {
@@ -61,13 +54,15 @@ export abstract class EmptyStorageRackSequence {
 
     // Rotate the arm to the other side, lower towards the belt and notify we are ready to drop the block
     await arm.goToCoordinateAbsolute({ X: -186.33, Y: 80.00, Z: 75, A: 0, B: 0, C: 0 });
-    await arm.moveAxisRelative(Axis.Z, -20)
+    await arm.moveAxisRelative(Axis.Z, -28)
     EmptyStorageRackSequence.events.emit(Events.READY_TO_DROP);
 
     // Wait for confirmation to drop the block
     await EmptyStorageRackSequence.waitForDropConfirmation()
+    await arm.turnOnBlowSuctionCup();
+    await wait(500);
     await arm.turnOffSuctionCup()
-    await arm.moveAxisRelative(Axis.Z, 20)
+    await arm.moveAxisRelative(Axis.Z, 28)
     EmptyStorageRackSequence.events.emit(Events.DROPPED);
 
     // Rotate the arm back towards the storage rack side

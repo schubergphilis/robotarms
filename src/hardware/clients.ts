@@ -33,10 +33,6 @@ export class NetClient implements IClient {
     })
 
     this.events = this.client.pipe(new DelimiterParser({ delimiter: '\n' }));
-
-    this.events.on('data', (data: Buffer) => {
-      console.log(data.toString('utf-8'));
-    });
   }
 
   public connect(): Promise<void> {
@@ -50,10 +46,10 @@ export class NetClient implements IClient {
 
   public send(data: string, silent = false): void {
     if (!silent) {
-      logger.debug(`Command send: ${data}`);
+      logger.debug(`[${Date.now()}]: ${data}`);
     }
 
-    this.client.write(`${data} \n`);
+    this.client.write(Buffer.from(`${data} \n`, 'utf-8'));
   }
 }
 
