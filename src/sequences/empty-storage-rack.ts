@@ -53,7 +53,7 @@ export abstract class EmptyStorageRackSequence {
     await arm.goToCoordinateAbsolute({ X: 169, Y: 0, Z: 150, A: 0, B: 0, C: 0 });
 
     // Rotate the arm to the other side, lower towards the belt and notify we are ready to drop the block
-    await arm.goToCoordinateAbsolute({ X: -186.33, Y: 80.00, Z: 75, A: 0, B: 0, C: 0 });
+    await arm.goToCoordinateAbsolute({ X: -186.33, Y: 80.00, Z: 70, A: 0, B: 0, C: 0 });
     await arm.moveAxisRelative(Axis.Z, -28)
     EmptyStorageRackSequence.events.emit(Events.READY_TO_DROP);
 

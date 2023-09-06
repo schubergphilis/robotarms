@@ -5,7 +5,7 @@ import { logger } from '../logger';
 import chalk from 'chalk';
 
 // This is location to pickup the block from the belt. It should be slightly above the block/belt
-const pickupLocation: IPosition = { X: -79.69, Y: 219.6, Z: 105.90, A: 0, B: 0, C: 0 };
+const pickupLocation: IPosition = { X: -42.50, Y: 218.5, Z: 107.3, A: 0, B: 0, C: 0 };
 
 // This is the amount the arm will lower from the above pickupLocation to pickup the item
 const pickupDistance = 15;
