@@ -14,13 +14,16 @@ import { ColorDetectionCamera } from './hardware/color-camera';
 
   // Use serial connections
   // const boxOne = await ConnectBox.create({ path: '/dev/tty.usbserial-14310', baudRate: 115200 });
+  //const boxOne = await ConnectBox.create({ path: '/dev/tty.usbserial-141140', baudRate: 115200 });
   // const boxTwo = await ConnectBox.create({ path: '/dev/tty.usbserial-14210', baudRate: 115200 });
+  //const boxTwo = await ConnectBox.create({ path: '/dev/tty.usbserial-141120', baudRate: 115200 });
   // const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
+  //const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
 
   // Use network connections
-  const boxOne = await ConnectBox.create({ host: '10.32.16.1', port: 3000 }, true);
-  const boxTwo = await ConnectBox.create({ host: '10.32.16.1', port: 3001 }, true);
-  const colorDetectionCamera = await ColorDetectionCamera.create({ host: '10.32.16.1', port: 3002 });
+  const boxOne = await ConnectBox.create({ host: '10.32.16.21', port: 3000 }, true);
+  const boxTwo = await ConnectBox.create({ host: '10.32.16.21', port: 3001 }, true);
+  const colorDetectionCamera = await ColorDetectionCamera.create({ host: '10.32.16.21', port: 3002 });
 
   // Initialise hardware abstractions
   const armOne = new RobotArm(boxOne);
@@ -43,14 +46,10 @@ import { ColorDetectionCamera } from './hardware/color-camera';
   await Promise.all([armOne.home(), armTwo.home()]);
 
   // When a block is detected, wait for boxTwo (belt and arm) to be idle and then run the sorting sequence
-  sensor.event.on('detected', async () => {
-    logger.info('Block detected, triggering sorting sequence')
-    await boxTwo.waitForIdle();
-    SortSequence.run(armTwo, colorDetectionCamera).catch((e) => {
-      logger.error('Error occured in sort sequence');
-      console.error(e);
-    })
-  });
+  //  sensor.event.on('detected', async () => {
+ //   logger.info('Block detected, triggering sorting sequence')
+ //  await boxTwo.waitForIdle();
+ //  });
 
   // When ready to drop the block, check if the other arm/belt/sequence is ready for it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.READY_TO_DROP, async () => {
@@ -63,7 +62,11 @@ import { ColorDetectionCamera } from './hardware/color-camera';
   // When the storage sequence drops a block on the belt, move it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.DROPPED, async () => {
     logger.info('Block received, moving belt');
-    await belt.move(500);
+    await belt.move(-500);
+    SortSequence.run(armTwo, colorDetectionCamera).catch((e) => {
+      logger.error('Error occured in sort sequence');
+      console.error(e);
+    })
   })
 
   // When the rack is empty, start filling it again
