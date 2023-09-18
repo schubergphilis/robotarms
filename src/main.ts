@@ -7,7 +7,7 @@ import { FillStorageRackSequence, Events as FillStorageRackEvents } from './sequ
 import { PhotonicSensor } from './hardware/photonic-sensor';
 import { SortSequence } from './sequences/sort';
 import { logger, LogLevel } from './logger';
-import { ColorDetectionCamera } from './hardware/color-camera';
+import { ColorCamera } from './hardware/color-camera';
 
 (async () => {
   logger.setLogLevel(LogLevel.Debug)
@@ -18,9 +18,9 @@ import { ColorDetectionCamera } from './hardware/color-camera';
   // const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
 
   // Use network connections
-  const boxOne = await ConnectBox.create({ host: '10.32.16.1', port: 3000 }, true);
-  const boxTwo = await ConnectBox.create({ host: '10.32.16.1', port: 3001 }, true);
-  const colorDetectionCamera = await ColorDetectionCamera.create({ host: '10.32.16.1', port: 3002 });
+  const boxOne = await ConnectBox.create({ host: '10.22.0.121', port: 3000 }, true);
+  const boxTwo = await ConnectBox.create({ host: '10.22.0.122', port: 3000 }, true);
+  const camera = await ColorCamera.create({ host: '10.22.0.123', port: 3000 });
 
   // Initialise hardware abstractions
   const armOne = new RobotArm(boxOne);
@@ -46,7 +46,7 @@ import { ColorDetectionCamera } from './hardware/color-camera';
   sensor.event.on('detected', async () => {
     logger.info('Block detected, triggering sorting sequence')
     await boxTwo.waitForIdle();
-    SortSequence.run(armTwo, colorDetectionCamera).catch((e) => {
+    SortSequence.run(armTwo, camera).catch((e) => {
       logger.error('Error occured in sort sequence');
       console.error(e);
     })
@@ -63,7 +63,7 @@ import { ColorDetectionCamera } from './hardware/color-camera';
   // When the storage sequence drops a block on the belt, move it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.DROPPED, async () => {
     logger.info('Block received, moving belt');
-    await belt.move(500);
+    await belt.move(-500);
   })
 
   // When the rack is empty, start filling it again

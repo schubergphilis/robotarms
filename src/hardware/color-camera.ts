@@ -7,7 +7,7 @@ export enum Color {
   RED = 'Red',
 }
 
-export class ColorDetectionCamera {
+export class ColorCamera {
   public readonly events = new EventEmitter()
   public readonly client: IClient;
   private currentColor?: Color;
@@ -52,8 +52,8 @@ export class ColorDetectionCamera {
   }
 
   // Factory function to combine creation and asynchronous connection setup
-  public static async create(config: INetClientConfig | ISerialClientConfig): Promise<ColorDetectionCamera> {
-    const camera = new ColorDetectionCamera(config);
+  public static async create(config: INetClientConfig | ISerialClientConfig): Promise<ColorCamera> {
+    const camera = new ColorCamera(config);
     await camera.client.connect();
     return camera;
   }

@@ -47,14 +47,14 @@ export abstract class EmptyStorageRackSequence {
     await arm.goToCoordinateAbsolute({ X: 169, Y: 0, Z: 150, A: 0, B: 0, C: 0 })
 
     // Move the slider to the end position
-    await slider.moveTo(360)
+    await slider.moveTo(365)
 
     // Move the arm to the hover position on the rack side
     await arm.goToCoordinateAbsolute({ X: 169, Y: 0, Z: 150, A: 0, B: 0, C: 0 });
 
     // Rotate the arm to the other side, lower towards the belt and notify we are ready to drop the block
     await arm.goToCoordinateAbsolute({ X: -186.33, Y: 80.00, Z: 75, A: 0, B: 0, C: 0 });
-    await arm.moveAxisRelative(Axis.Z, -28)
+    await arm.moveAxisRelative(Axis.Z, -35)
     EmptyStorageRackSequence.events.emit(Events.READY_TO_DROP);
 
     // Wait for confirmation to drop the block
@@ -62,7 +62,7 @@ export abstract class EmptyStorageRackSequence {
     await arm.turnOnBlowSuctionCup();
     await wait(500);
     await arm.turnOffSuctionCup()
-    await arm.moveAxisRelative(Axis.Z, 28)
+    await arm.moveAxisRelative(Axis.Z, 35)
     EmptyStorageRackSequence.events.emit(Events.DROPPED);
 
     // Rotate the arm back towards the storage rack side

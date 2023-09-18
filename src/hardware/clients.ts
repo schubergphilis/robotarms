@@ -27,6 +27,10 @@ export class NetClient implements IClient {
       logger.error(`[NetClient] Connection closed for host: ${this.config.host} and ${this.config.port}`);
     })
 
+    this.client.on('drop', () => {
+      logger.error(`[NetClient] Connection dropped for host: ${this.config.host} and ${this.config.port}`);
+    })
+
     this.client.on('error', (error) => {
       logger.error('[NetClient] An error occured');
       console.error(error);
@@ -37,6 +41,7 @@ export class NetClient implements IClient {
 
   public connect(): Promise<void> {
     return new Promise((resolve) => {
+      logger.debug(`[NetClient] Connecting to: ${this.config.host} on port: ${this.config.port}`);
       this.client.connect(this.config.port, this.config.host, () => {
         logger.debug(`[NetClient] Connected to: ${this.config.host} on port: ${this.config.port}`);
         resolve();

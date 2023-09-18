@@ -1,21 +1,16 @@
 import { RobotArm, Slider, Axis } from "../hardware";
 import { logger } from '../logger';
 
-const columnCount = 6;
-const columnSpacing = 40;
-const rowSpacing = 82;
-
-
 // const sliderPositionZero = 155;
-const pickupPosition = { X: 168, Y: 0, Z: 43.5, A: 0, B: -90, C: 0};
-const pickUpDistance = 52;
+const pickupPosition = { X: 210, Y: 0, Z: 51.5, A: 0, B: -90, C: 0};
+const pickUpDistance = 19;
 
 export abstract class Storage {
   public static readonly columnCount = 6; // Number of columns in the storage rack
-  public static readonly columnSpacing = 40; // Distance between columns
-  public static readonly rowSpacing = 82 // Distance between rows
+  public static readonly columnSpacing = 41; // Distance between columns
+  public static readonly rowSpacing = 64 // Distance between rows
 
-  public static readonly sliderPositionColumnZero = 157;
+  public static readonly sliderPositionColumnZero = 119;
 
   public static async retrieveItem(arm: RobotArm, slider: Slider, index: number) {
     const row = Storage.calculateRow(index);
@@ -66,21 +61,21 @@ export abstract class Storage {
 
   // Calculate the column based on the index
   public static calculateColumn(index: number): number {
-    return index % columnCount;
+    return index % Storage.columnCount;
   }
 
   // Calculate the row based on the index
   public static calculateRow(index: number): number {
-    return Math.floor(index / columnCount);
+    return Math.floor(index / Storage.columnCount);
   }
 
   // Calculate the slider position for the given column
   private static calculateSliderPosition(column: number): number {
-    return Storage.sliderPositionColumnZero + (column * columnSpacing)
+    return Storage.sliderPositionColumnZero + (column * Storage.columnSpacing)
   }
 
   // Calculate the arm height for the given row
   private static calculateHeightPosition(row: number): number {
-    return pickupPosition.Z + (row * rowSpacing)
+    return pickupPosition.Z + (row * Storage.rowSpacing)
   }
 }
