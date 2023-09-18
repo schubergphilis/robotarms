@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { IPosition, RobotArm, Axis } from '../hardware/robotarm';
-import { ColorDetectionCamera, Color } from '../hardware';
+import { ColorCamera, Color } from '../hardware';
 import { logger } from '../logger';
 import chalk from 'chalk';
 
@@ -34,7 +34,7 @@ export abstract class SortSequence {
   static events = new EventEmitter();
   static state = SortSequenceState.IDLE;
 
-  static async run(arm: RobotArm, camera: ColorDetectionCamera): Promise<void> {
+  static async run(arm: RobotArm, camera: ColorCamera): Promise<void> {
     SortSequence.state = SortSequenceState.RUNNING;
     SortSequence.events.emit(SortSequenceEvents.STARTED);
 
