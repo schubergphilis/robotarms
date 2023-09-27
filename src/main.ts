@@ -42,28 +42,22 @@ import { ColorCamera } from './hardware/color-camera';
   await slider.home();
   await Promise.all([armOne.home(), armTwo.home()]);
 
-  // When a block is detected, wait for boxTwo (belt and arm) to be idle and then run the sorting sequence
-  sensor.event.on('detected', async () => {
-    logger.info('Block detected, triggering sorting sequence')
-    await boxTwo.waitForIdle();
-    SortSequence.run(armTwo, camera).catch((e) => {
-      logger.error('Error occured in sort sequence');
-      console.error(e);
-    })
-  });
-
   // When ready to drop the block, check if the other arm/belt/sequence is ready for it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.READY_TO_DROP, async () => {
     logger.info('Ready to drop block, waiting for confirmation');
-    await boxTwo.waitForIdle();
+    await SortSequence.waitForIdle();
     logger.info('Dropping block');
     EmptyStorageRackSequence.events.emit(EmptyStorageRackSequenceEvents.DROP_BLOCK);
   });
 
   // When the storage sequence drops a block on the belt, move it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.DROPPED, async () => {
-    logger.info('Block received, moving belt');
-    await belt.move(-500);
+    logger.info('Block received, moving belt and sorting');
+
+    await SortSequence.run(armTwo, belt, camera).catch((e) => {
+      logger.error('Error occured in sort sequence');
+      console.error(e);
+    })
   })
 
   // When the rack is empty, start filling it again

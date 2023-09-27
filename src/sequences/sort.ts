@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { IPosition, RobotArm, Axis } from '../hardware/robotarm';
-import { ColorCamera, Color } from '../hardware';
+import { ColorCamera, Color, Belt } from '../hardware';
 import { logger } from '../logger';
 import chalk from 'chalk';
 
@@ -34,9 +34,11 @@ export abstract class SortSequence {
   static events = new EventEmitter();
   static state = SortSequenceState.IDLE;
 
-  static async run(arm: RobotArm, camera: ColorCamera): Promise<void> {
+  static async run(arm: RobotArm, belt: Belt, camera: ColorCamera): Promise<void> {
     SortSequence.state = SortSequenceState.RUNNING;
     SortSequence.events.emit(SortSequenceEvents.STARTED);
+
+    await belt.move(-500);
 
     // Determine the color before picking it up
     const color = await camera.determineColor();

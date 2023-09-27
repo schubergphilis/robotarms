@@ -6,7 +6,7 @@ const pickUpDistance = 22;
 
 export abstract class Storage {
   public static readonly columnCount = 6; // Number of columns in the storage rack
-  public static readonly columnSpacing = 41; // Distance between columns
+  public static readonly columnSpacing = 40.5; // Distance between columns
   public static readonly rowSpacing = 64 // Distance between rows
 
   public static readonly sliderPositionColumnZero = 119;
