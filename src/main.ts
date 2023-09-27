@@ -3,7 +3,7 @@ import { RobotArm } from './hardware/robotarm';
 import { Slider } from './hardware/slider';
 import { Belt } from './hardware/belt';
 import { EmptyStorageRackSequence, Events as EmptyStorageRackSequenceEvents} from './sequences/empty-storage-rack';
-import { FillStorageRackSequence, Events as FillStorageRackEvents } from './sequences/fill-storage-rack';
+// import { FillStorageRackSequence, Events as FillStorageRackEvents } from './sequences/fill-storage-rack';
 import { PhotonicSensor } from './hardware/photonic-sensor';
 import { SortSequence } from './sequences/sort';
 import { logger, LogLevel } from './logger';
@@ -67,19 +67,19 @@ import { ColorCamera } from './hardware/color-camera';
   })
 
   // When the rack is empty, start filling it again
-  EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.FINISHED, () => {
-    logger.info('Finished storage rack sequence, starting fill rack sequence');
-    FillStorageRackSequence.run(armOne, slider);
-  })
+  // EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.FINISHED, () => {
+  //   logger.info('Finished storage rack sequence, starting fill rack sequence');
+  //   FillStorageRackSequence.run(armOne, slider);
+  // })
 
   // When the rack is filled again, started emptying it again, loop loop :D
-  FillStorageRackSequence.events.on(FillStorageRackEvents.FINISHED, async() => {
-    // First home everything before starting a new loop
-    // This will hopefully help to maintain accuracy over longer periods of running
-    await slider.home()
-    await Promise.all([armOne.home(), armTwo.home()]);
-    EmptyStorageRackSequence.run(armOne, slider);
-  });
+  // FillStorageRackSequence.events.on(FillStorageRackEvents.FINISHED, async() => {
+  //   // First home everything before starting a new loop
+  //   // This will hopefully help to maintain accuracy over longer periods of running
+  //   await slider.home()
+  //   await Promise.all([armOne.home(), armTwo.home()]);
+  //   EmptyStorageRackSequence.run(armOne, slider);
+  // });
 
   // Start emptying the rack
   EmptyStorageRackSequence.run(armOne, slider);
