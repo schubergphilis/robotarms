@@ -1,9 +1,8 @@
 import { RobotArm, Slider, Axis } from "../hardware";
 import { logger } from '../logger';
 
-// const sliderPositionZero = 155;
 const pickupPosition = { X: 210, Y: 0, Z: 51.5, A: 0, B: -90, C: 0};
-const pickUpDistance = 19;
+const pickUpDistance = 22;
 
 export abstract class Storage {
   public static readonly columnCount = 6; // Number of columns in the storage rack

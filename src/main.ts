@@ -18,8 +18,8 @@ import { ColorCamera } from './hardware/color-camera';
   // const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
 
   // Use network connections
-  const boxOne = await ConnectBox.create({ host: '10.22.0.121', port: 3000 }, true);
-  const boxTwo = await ConnectBox.create({ host: '10.22.0.122', port: 3000 }, true);
+  const boxOne = await ConnectBox.create({ host: '10.22.0.121', port: 3000, name: 'Box 1' }, true);
+  const boxTwo = await ConnectBox.create({ host: '10.22.0.122', port: 3000, name: 'Box 2' }, true);
   const camera = await ColorCamera.create({ host: '10.22.0.123', port: 3000 });
 
   // Initialise hardware abstractions

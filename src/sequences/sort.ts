@@ -5,20 +5,20 @@ import { logger } from '../logger';
 import chalk from 'chalk';
 
 // This is location to pickup the block from the belt. It should be slightly above the block/belt
-const pickupLocation: IPosition = { X: -79.69, Y: 219.6, Z: 105.90, A: 0, B: 0, C: 0 };
+const pickupLocation: IPosition = { X: -44.10, Y: 221.2, Z: 112.70, A: 0, B: 0, C: 0 };
 
 // This is the amount the arm will lower from the above pickupLocation to pickup the item
-const pickupDistance = 15;
+const pickupDistance = 10;
 
 // These are the arm positions for each color and where to drop them, should be hovering above the position
 const dropLocations = {
-  [Color.GREEN]: { X: 244,  Y: 67,  Z: 250, A: 0.00, B: 0.00, C: 0.00 },
-  [Color.BLUE]:  { X: 244,  Y: 11,  Z: 250, A: 0.00, B: 0.00, C: 0.00 },
-  [Color.RED]:   { X: 244,  Y: -45,  Z: 250, A: 0.00, B: 0.00, C: 0.00 },
+  [Color.GREEN]: { X: 246,  Y: 12,  Z: 230, A: 0, B: 0, C: 0 },
+  [Color.BLUE]:  { X: 246,  Y: -30,  Z: 230, A: 0, B: 0, C: 0 },
+  [Color.RED]:   { X: 246,  Y: -70,  Z: 230, A: 0, B: 0, C: 0 },
 }
 
 // This is the amount the arm gets lowered compared to the Z given in the dropLocations above
-const dropDistance = 45;
+const dropDistance = 30;
 
 export enum SortSequenceEvents {
   STARTED = 'STARTED',

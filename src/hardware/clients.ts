@@ -49,11 +49,7 @@ export class NetClient implements IClient {
     })
   }
 
-  public send(data: string, silent = false): void {
-    if (!silent) {
-      logger.debug(`[${Date.now()}]: ${data}`);
-    }
-
+  public send(data: string): void {
     this.client.write(Buffer.from(`${data} \n`, 'utf-8'));
   }
 }
@@ -84,11 +80,7 @@ export class SerialClient implements IClient {
     return Promise.resolve();
   }
 
-  public send(data: string, silent = false): void {
-    if (!silent) {
-      logger.debug(`Command send: ${data}`);
-    }
-
+  public send(data: string): void {
     this.port.write(`${data} \n`);
   }
 }

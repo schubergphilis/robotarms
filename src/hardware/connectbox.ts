@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { IClient, SerialClient, NetClient } from './clients'
+import { logger } from '../logger';
 
 export interface IStatus {
   state: string,
@@ -24,6 +25,7 @@ export interface IStatus {
 
 export interface IConfig {
   logCommands?: boolean;
+  name: string;
 }
 
 /**
@@ -68,7 +70,7 @@ export class ConnectBox {
   public statusEmitter = new EventEmitter();
   private okEmitter = new EventEmitter();
 
-  constructor(config: ISerialConfig | INetConfig, private logCommands = false) {
+  constructor(private config: ISerialConfig | INetConfig, private logCommands = false) {
     if ('path' in config) {
       this.client = new SerialClient(config);
     } else {
@@ -104,7 +106,7 @@ export class ConnectBox {
       } else if (wait === true) {
         // Start polling for status updates
         const interval = setInterval(() => {
-          this.client.send('?', true) // Silent to prevent excessive logging
+          this.sendToClient('?', true) // Silent to prevent excessive logging
         }, 100)
 
         // Once we receive the Idle state, we consider the command that was executed to be finished
@@ -114,19 +116,19 @@ export class ConnectBox {
         })
 
         // Send the command
-        this.client.send(cmd, !this.logCommands);
+        this.sendToClient(cmd, !this.logCommands);
       } else if (wait === false && waitForConfirmation === true) {
         this.okEmitter.once('ok', resolve);
-        this.client.send(cmd, !this.logCommands);
+        this.sendToClient(cmd, !this.logCommands);
       } else if (wait === false && waitForConfirmation === false) {
-        this.client.send(cmd, !this.logCommands);
+        this.sendToClient(cmd, !this.logCommands);
         resolve()
       }
     })
   }
 
   public stop() {
-    this.client.send('!\n');
+    this.sendToClient('!\n');
   }
 
   public waitForIdle(): Promise<void> {
@@ -145,6 +147,14 @@ export class ConnectBox {
     const box = new ConnectBox(config, logCommands);
     await box.client.connect();
     return box;
+  }
+
+  private sendToClient(data: string, silent = false) {
+    if (!silent) {
+      logger.debug(`[${this.config.name}] ${data}`)
+    }
+
+    return this.client.send(data)
   }
 
   private static parseStatus(status: string): IStatus {
