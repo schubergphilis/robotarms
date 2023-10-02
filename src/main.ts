@@ -1,84 +1,100 @@
-import { ConnectBox } from './hardware/connectbox';
-import { RobotArm } from './hardware/robotarm';
-import { Slider } from './hardware/slider';
-import { Belt } from './hardware/belt';
-import { EmptyStorageRackSequence, Events as EmptyStorageRackSequenceEvents} from './sequences/empty-storage-rack';
-// import { FillStorageRackSequence, Events as FillStorageRackEvents } from './sequences/fill-storage-rack';
-import { PhotonicSensor } from './hardware/photonic-sensor';
-import { SortSequence } from './sequences/sort';
-import { logger, LogLevel } from './logger';
-import { ColorCamera } from './hardware/color-camera';
+import express, { Express } from 'express';
+import { join } from 'path';
+import { fork, ChildProcess } from 'node:child_process';
 
-(async () => {
-  logger.setLogLevel(LogLevel.Debug)
+enum Status {
+  RUNNING = 'Running',
+  IDLE = 'Idle',
+  FINISHED = 'Finished',
+  ERROR = 'Error',
+  STOPPED = 'Stopped'
+}
 
-  // Use serial connections
-  // const boxOne = await ConnectBox.create({ path: '/dev/tty.usbserial-14310', baudRate: 115200 });
-  // const boxTwo = await ConnectBox.create({ path: '/dev/tty.usbserial-14210', baudRate: 115200 });
-  // const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
+const app: Express = express();
+app.use(express.static('./src/web'));
 
-  // Use network connections
-  const boxOne = await ConnectBox.create({ host: '10.22.0.121', port: 3000, name: 'Box 1' }, true);
-  const boxTwo = await ConnectBox.create({ host: '10.22.0.122', port: 3000, name: 'Box 2' }, true);
-  const camera = await ColorCamera.create({ host: '10.22.0.123', port: 3000 });
+let status: Status = Status.IDLE;
+let controller: AbortController | undefined;
+let childProcess: ChildProcess | undefined;
 
-  // Initialise hardware abstractions
-  const armOne = new RobotArm(boxOne);
-  const slider = new Slider(boxOne);
-  const armTwo = new RobotArm(boxTwo);
-  const belt = new Belt(boxTwo);
-  const sensor = new PhotonicSensor(boxTwo);
+function startSubprocess() {
+  if (!controller && !childProcess) {
+    controller = new AbortController();
+    const { signal } = controller;
+    childProcess = fork(join(__dirname, './process.js'), ['child'], { signal });
 
-  // On exit of the process, at least turn off the suction cups
-  process.on('SIGINT', () => {
-    logger.debug('Received SIGINT, exiting....');
-    boxOne.client.send('M3 S0', true); // Turns off the suction cup
-    boxTwo.client.send('M3 S0', true);
-    process.exit();
-  })
-
-  // Always home first
-  logger.info('Homing slider and arms');
-  await slider.home();
-  await Promise.all([armOne.home(), armTwo.home()]);
-
-  // When ready to drop the block, check if the other arm/belt/sequence is ready for it
-  EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.READY_TO_DROP, async () => {
-    logger.info('Ready to drop block, waiting for confirmation');
-    await SortSequence.waitForIdle();
-    logger.info('Dropping block');
-    EmptyStorageRackSequence.events.emit(EmptyStorageRackSequenceEvents.DROP_BLOCK);
-  });
-
-  // When the storage sequence drops a block on the belt, move it
-  EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.DROPPED, async () => {
-    logger.info('Block received, moving belt and sorting');
-
-    await SortSequence.run(armTwo, belt, camera).catch((e) => {
-      logger.error('Error occured in sort sequence');
-      console.error(e);
+    childProcess.on('close', () => {
+      status = Status.STOPPED;
     })
-  })
+    childProcess.on('exit', () => {
+      status = Status.STOPPED;
+    })
+    childProcess.on('error', () => {
+      status = Status.ERROR;
+    })
+    childProcess.on('message', (data) => {
+      console.log('received message from child: ', data)
+    })
 
-  // When the rack is empty, start filling it again
-  // EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.FINISHED, () => {
-  //   logger.info('Finished storage rack sequence, starting fill rack sequence');
-  //   FillStorageRackSequence.run(armOne, slider);
-  // })
 
-  // When the rack is filled again, started emptying it again, loop loop :D
-  // FillStorageRackSequence.events.on(FillStorageRackEvents.FINISHED, async() => {
-  //   // First home everything before starting a new loop
-  //   // This will hopefully help to maintain accuracy over longer periods of running
-  //   await slider.home()
-  //   await Promise.all([armOne.home(), armTwo.home()]);
-  //   EmptyStorageRackSequence.run(armOne, slider);
-  // });
+    status = Status.RUNNING;
+  }  else {
+    throw new Error('There is already a process running');
+  }
+}
 
-  // Start emptying the rack
-  EmptyStorageRackSequence.run(armOne, slider);
-})().catch((error: unknown) => {
-  console.log('An error occured');
-  console.error(error);
-  process.exit();
+function stopSubprocess() {
+  if (controller && childProcess) {
+    controller.abort();
+    controller = undefined;
+    childProcess = undefined;
+    status = Status.STOPPED;
+  } else {
+    throw new Error('No process running');
+  }
+}
+
+// Starts the subprocess for the robot arms
+app.get('/start', (_, res) => {
+  console.log('[Server] Received start request');
+  try {
+    startSubprocess();
+    res.send('Started!');
+  } catch (e: unknown) {
+    res.status(500).send(e);
+  }
+});
+
+// Stops the subprocess for the robot arms
+app.get('/stop', (_, res) => {
+  console.log('[Server] Received stop request');
+  try {
+    stopSubprocess();
+    res.send('Stopped!');
+  } catch (e: unknown) {
+    res.status(500).send(e);
+  }
+});
+
+// Returns the current status of the process
+app.get('/status', (_, res) => {
+  res.send({ status })
+});
+
+app.get('/kill', (_, res) => {
+  if (childProcess) {
+    childProcess.send('emergency-stop')
+    status = Status.STOPPED;
+    res.send('Stopped!');
+  } else {
+    res.status(400).send('No process running at the moment');
+  }
+});
+
+process.on('beforeExit', () => {
+  stopSubprocess();
+});
+
+app.listen(3000, () => {
+  console.log('Server is running...')
 });
