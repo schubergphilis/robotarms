@@ -4,7 +4,6 @@ import { Slider } from './hardware/slider';
 import { Belt } from './hardware/belt';
 import { EmptyStorageRackSequence, Events as EmptyStorageRackSequenceEvents} from './sequences/empty-storage-rack';
 // import { FillStorageRackSequence, Events as FillStorageRackEvents } from './sequences/fill-storage-rack';
-import { PhotonicSensor } from './hardware/photonic-sensor';
 import { SortSequence } from './sequences/sort';
 import { logger, LogLevel } from './logger';
 import { ColorCamera } from './hardware/color-camera';
@@ -27,7 +26,6 @@ import { ColorCamera } from './hardware/color-camera';
   const slider = new Slider(boxOne);
   const armTwo = new RobotArm(boxTwo);
   const belt = new Belt(boxTwo);
-  const sensor = new PhotonicSensor(boxTwo);
 
   // On exit of the process, at least turn off the suction cups
   process.on('SIGINT', () => {
@@ -42,16 +40,6 @@ import { ColorCamera } from './hardware/color-camera';
   await slider.home();
   await Promise.all([armOne.home(), armTwo.home()]);
 
-  // When a block is detected, wait for boxTwo (belt and arm) to be idle and then run the sorting sequence
-  sensor.event.on('detected', async () => {
-    logger.info('Block detected, triggering sorting sequence')
-    await boxTwo.waitForIdle();
-    SortSequence.run(armTwo, camera).catch((e) => {
-      logger.error('Error occured in sort sequence');
-      console.error(e);
-    })
-  });
-
   // When ready to drop the block, check if the other arm/belt/sequence is ready for it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.READY_TO_DROP, async () => {
     logger.info('Ready to drop block, waiting for confirmation');
@@ -63,7 +51,11 @@ import { ColorCamera } from './hardware/color-camera';
   // When the storage sequence drops a block on the belt, move it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.DROPPED, async () => {
     logger.info('Block received, moving belt');
-    await belt.move(-500);
+
+    await SortSequence.run(armTwo, belt, camera).catch((e) => {
+      logger.error('Error occured in sort sequence');
+      console.error(e);
+    })
   })
 
   // When the rack is empty, start filling it again
@@ -80,6 +72,12 @@ import { ColorCamera } from './hardware/color-camera';
   //   await Promise.all([armOne.home(), armTwo.home()]);
   //   EmptyStorageRackSequence.run(armOne, slider);
   // });
+
+  // Once finished, exit the process
+  EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.FINISHED, () => {
+    logger.info('Finished storage rack sequence');
+    process.exit();
+  })
 
   // Start emptying the rack
   EmptyStorageRackSequence.run(armOne, slider);

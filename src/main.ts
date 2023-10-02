@@ -1,5 +1,5 @@
 import express, { Express } from 'express';
-import cors from 'cors';
+import { join } from 'path';
 import { fork, ChildProcess } from 'node:child_process';
 
 enum Status {
@@ -11,7 +11,7 @@ enum Status {
 }
 
 const app: Express = express();
-app.use(cors)
+app.use(express.static('./src/web'));
 
 let status: Status = Status.IDLE;
 let controller: AbortController | undefined;
@@ -21,12 +21,20 @@ function startSubprocess() {
   if (!controller && !childProcess) {
     controller = new AbortController();
     const { signal } = controller;
-    childProcess = fork('./process.js', ['child'], { signal });
+    childProcess = fork(join(__dirname, './process.js'), ['child'], { signal });
 
-    childProcess.on('close', () => {})
-    childProcess.on('exit', () => {})
-    childProcess.on('error', () => {})
-    childProcess.on('message', () => {}) // process.send in child
+    childProcess.on('close', () => {
+      status = Status.STOPPED;
+    })
+    childProcess.on('exit', () => {
+      status = Status.STOPPED;
+    })
+    childProcess.on('error', () => {
+      status = Status.ERROR;
+    })
+    childProcess.on('message', (data) => {
+      console.log('received message from child: ', data)
+    })
 
 
     status = Status.RUNNING;
@@ -38,6 +46,7 @@ function startSubprocess() {
 function stopSubprocess() {
   if (controller && childProcess) {
     controller.abort();
+    controller = undefined;
     childProcess = undefined;
     status = Status.STOPPED;
   } else {
@@ -45,16 +54,26 @@ function stopSubprocess() {
   }
 }
 
-// Starts the subprocess for the roboto arms
+// Starts the subprocess for the robot arms
 app.get('/start', (_, res) => {
-  startSubprocess();
-  res.send('Started!');
+  console.log('[Server] Received start request');
+  try {
+    startSubprocess();
+    res.send('Started!');
+  } catch (e: unknown) {
+    res.status(500).send(e);
+  }
 });
 
 // Stops the subprocess for the robot arms
 app.get('/stop', (_, res) => {
-  stopSubprocess();
-  res.send('Stopped!');
+  console.log('[Server] Received stop request');
+  try {
+    stopSubprocess();
+    res.send('Stopped!');
+  } catch (e: unknown) {
+    res.status(500).send(e);
+  }
 });
 
 // Returns the current status of the process
