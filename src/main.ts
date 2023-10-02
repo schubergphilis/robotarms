@@ -11,7 +11,7 @@ enum Status {
 }
 
 const app: Express = express();
-app.use(express.static('./src/web'));
+app.use(express.static(join(__dirname, 'web')));
 
 let status: Status = Status.IDLE;
 let controller: AbortController | undefined;
