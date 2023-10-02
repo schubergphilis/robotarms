@@ -44,7 +44,7 @@
       }
 
       function makeRequest(action) {
-        return fetch(`http://localhost:3000/${action}`, { method: 'GET' });
+        return fetch(`${window.origin}/${action}`, { method: 'GET' });
       }
 
       function updateStatus(status) {
