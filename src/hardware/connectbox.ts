@@ -55,6 +55,7 @@ export interface ISerialConfig extends IConfig {
 }
 
 export enum State {
+  ALARM = 'Alarm',
   HOME = 'Home',
   IDLE = 'Idle',
   HOLD = 'Hold',
@@ -84,8 +85,9 @@ export class ConnectBox {
       // logger.debug(str);
 
       // Status update
-      if (str.startsWith('<')) {
-        this.status = ConnectBox.parseStatus(str)
+      const statusStr = str.match(/(<(.*),*>)/);
+      if (statusStr !== null) {
+        this.status = ConnectBox.parseStatus(statusStr)
         this.statusEmitter.emit('status', this.status);
         this.stateEmitter.emit(this.status.state)
       } else if (str.indexOf('ok') > -1) {
@@ -101,7 +103,7 @@ export class ConnectBox {
   public send(cmd: string, wait = true, waitForConfirmation = true): Promise<void> {
     return new Promise((resolve, reject) => {
       // Current state is no
-      if (this.status && this.status.state !== State.IDLE) {
+      if (this.status && this.status.state !== State.IDLE && this.status.state !== State.ALARM) {
         reject('Current state is not Idle, did you wait for the previous command to finish?');
       } else if (wait === true) {
         // Start polling for status updates
@@ -137,16 +139,32 @@ export class ConnectBox {
         resolve();
       } else {
         // TODO IMPLEMENT A TIMEOUT?
-        this.stateEmitter.once('Idle', resolve)
+        this.stateEmitter.once('Idle', resolve);
       }
     });
   }
 
   // Factory function to combine creation and asynchronous connection setup
   public static async create(config: ISerialConfig | INetConfig, logCommands = false): Promise<ConnectBox> {
-    const box = new ConnectBox(config, logCommands);
-    await box.client.connect();
-    return box;
+    return new Promise(async (resolve, reject) => {
+
+      const box = new ConnectBox(config, logCommands);
+      await box.client.connect();
+
+      // Verify the box is not in Hold state before starting
+      box.statusEmitter.once('status', (status: IStatus) => {
+        if (status.state === State.HOLD) {
+          reject(`Box: ${box.config.name} is in Hold state, please press reset on the arm and then restart`);
+        } else {
+          logger.info(`Box: ${box.config.name} is ready`);
+          resolve(box);
+        }
+      });
+
+      // Request status
+      box.sendToClient('?');
+    })
+
   }
 
   private sendToClient(data: string, silent = false) {
@@ -157,7 +175,8 @@ export class ConnectBox {
     return this.client.send(data)
   }
 
-  private static parseStatus(status: string): IStatus {
+  private static parseStatus(statusArray: RegExpMatchArray): IStatus {
+    const status = statusArray[0];
     const statusElements = status
           .replace('<', '')
           .replace('>', '')

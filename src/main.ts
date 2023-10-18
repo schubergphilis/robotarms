@@ -1,6 +1,8 @@
 import express, { Express } from 'express';
+import expressWs from 'express-ws';
 import { join } from 'path';
 import { fork, ChildProcess } from 'node:child_process';
+import { v4 as uuid } from 'uuid';
 
 enum Status {
   RUNNING = 'Running',
@@ -10,12 +12,15 @@ enum Status {
   STOPPED = 'Stopped'
 }
 
-const app: Express = express();
-app.use(express.static(join(__dirname, 'web')));
+const baseApp: Express = express();
+const { app } = expressWs(baseApp)
+baseApp.use(express.static(join(__dirname, 'web')));
 
 let status: Status = Status.IDLE;
 let controller: AbortController | undefined;
 let childProcess: ChildProcess | undefined;
+const listeners: Record<string, unknown> = {};
+
 
 function startSubprocess() {
   if (!controller && !childProcess) {
@@ -25,17 +30,22 @@ function startSubprocess() {
 
     childProcess.on('close', () => {
       status = Status.STOPPED;
+      clearSubprocess();
     })
     childProcess.on('exit', () => {
       status = Status.STOPPED;
+      clearSubprocess();
     })
     childProcess.on('error', () => {
+      clearSubprocess();
       status = Status.ERROR;
     })
-    childProcess.on('message', (data) => {
-      console.log('received message from child: ', data)
+    childProcess.on('message', (msg) => {
+      for (const listener in listeners) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        (listeners[listener] as WebSocket).send(msg.toString());
+      }
     })
-
 
     status = Status.RUNNING;
   }  else {
@@ -43,12 +53,16 @@ function startSubprocess() {
   }
 }
 
+function clearSubprocess() {
+  controller = undefined;
+  childProcess = undefined;
+  status = Status.STOPPED;
+}
+
 function stopSubprocess() {
   if (controller && childProcess) {
     controller.abort();
-    controller = undefined;
-    childProcess = undefined;
-    status = Status.STOPPED;
+    clearSubprocess();
   } else {
     throw new Error('No process running');
   }
@@ -61,6 +75,7 @@ app.get('/start', (_, res) => {
     startSubprocess();
     res.send('Started!');
   } catch (e: unknown) {
+    console.log(e);
     res.status(500).send(e);
   }
 });
@@ -89,6 +104,12 @@ app.get('/kill', (_, res) => {
   } else {
     res.status(400).send('No process running at the moment');
   }
+});
+
+app.ws('/logging', (ws) => {
+  const id = uuid();
+  listeners[id] = ws;
+  ws.on('close', () => { delete listeners[id]; });
 });
 
 process.on('beforeExit', () => {

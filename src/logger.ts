@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import chalk from 'chalk';
+import strip from 'strip-color';
 
 export enum LogLevel {
   Debug = 1,
@@ -16,25 +18,35 @@ class Logger {
 
   public debug(msg: string): void {
     if (this.logLevel <= LogLevel.Debug) {
-      console.log(`[DEBUG] ${chalk.magentaBright(msg)}`)
+      this.emit(`[DEBUG] ${chalk.magentaBright(msg)}`)
     }
   }
 
   public info(msg: string) {
     if (this.logLevel <= LogLevel.Info) {
-      console.log(`[INFO] ${chalk.whiteBright(msg)}`);
+      this.emit(`[INFO] ${chalk.whiteBright(msg)}`);
     }
   }
 
   public warn(msg: string): void {
     if (this.logLevel <= LogLevel.Warn) {
-      console.log(`[WARN] ${chalk.yellow(msg)}`);
+      this.emit(`[WARN] ${chalk.yellow(msg)}`);
     }
   }
 
   public error(msg: string): void {
     if (this.logLevel <= LogLevel.Error) {
-      console.log(`[ERROR] ${chalk.red(msg)}`);
+      this.emit(`[ERROR] ${chalk.red(msg)}`);
+    }
+  }
+
+  private emit(msg: string) {
+    // Print to the console
+    console.log(msg);
+
+    // Inform the parent process
+    if (process?.send) {
+      process.send(strip(msg));
     }
   }
 }

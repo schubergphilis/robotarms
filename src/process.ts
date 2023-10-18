@@ -82,7 +82,7 @@ import { ColorCamera } from './hardware/color-camera';
   // Start emptying the rack
   EmptyStorageRackSequence.run(armOne, slider);
 })().catch((error: unknown) => {
-  console.log('An error occured');
   console.error(error);
+  logger.error(error as string);
   process.exit();
 });

@@ -92,6 +92,10 @@
         makeRequest('stop');
       });
 
+      const loggingSocket = new WebSocket(`${window.origin}/logging`);
+      loggingSocket.addEventListener('message', (event) => {
+        printCommand(event.data);
+      })
 
       window.setInterval(() => {
         makeRequest('status').then((response) => {
