@@ -23,7 +23,6 @@ const baseApp: Express = express();
 const { app } = expressWs(baseApp)
 baseApp.use(express.static(join(__dirname, 'web')));
 
-let status: Status = Status.IDLE;
 let controller: AbortController | undefined;
 let childProcess: ChildProcess | undefined;
 const listeners: Record<string, unknown> = {};
@@ -32,6 +31,23 @@ function sendToSocket(msg: ISocketMessage) {
   for (const listener in listeners) {
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     (listeners[listener] as WebSocket).send(JSON.stringify(msg));
+  }
+}
+
+// Use getter and setter to notify socket of status updates
+const state = {
+  _status: Status.IDLE,
+
+  get status() {
+    return state._status;
+  },
+
+  set status(status: Status) {
+    state._status = status;
+    sendToSocket({
+      action: 'status',
+      data: status,
+    })
   }
 }
 
@@ -51,13 +67,15 @@ function startSubprocess() {
     childProcess.on('error', () => {
       clearSubprocess(Status.ERROR);
     })
+
+    // Pass along logging from child process to the socket for the UI to show
     childProcess.on('message', (msg) => {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/no-unsafe-assignment
       const data: ISocketMessage = JSON.parse(msg.toString());
       sendToSocket(data);
     })
 
-    status = Status.RUNNING;
+    state.status = Status.RUNNING;
   }  else {
     throw new Error('There is already a process running');
   }
@@ -66,7 +84,7 @@ function startSubprocess() {
 function clearSubprocess(status?: Status) {
   controller = undefined;
   childProcess = undefined;
-  status = status ?? Status.STOPPED;
+  state.status = status ?? Status.STOPPED;
 }
 
 function stopSubprocess() {
@@ -94,7 +112,7 @@ app.ws('/socket', (ws) => {
 
   ws.send(JSON.stringify({
     action: 'status',
-    status,
+    data: state.status,
   }))
 });
 

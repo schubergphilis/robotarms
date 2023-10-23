@@ -124,8 +124,10 @@
       }
 
       function printLogging(level, msg) {
+        // TODO we should probably not endlessly append but remove stuff eventually because of performance reasons as well...
         if (checkboxes[level]?.checked) {
           terminal.textContent = terminal.textContent + `\n> [${level}] ${msg}`
+          terminal.scrollTop = terminal.scrollHeight;
         }
       }
 
@@ -164,9 +166,9 @@
 
         socket.addEventListener('close', () => {
           setTimeout(() => {
-            printLogging('ERROR', 'Lost connection to websocket, trying to reconnect in 1 second');
+            printLogging('ERROR', 'Lost connection to websocket, trying to reconnect in 5 seconds');
             connectSocket();
-          }, 1000);
+          }, 5000);
         });
       }
 
