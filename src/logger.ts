@@ -18,35 +18,41 @@ class Logger {
 
   public debug(msg: string): void {
     if (this.logLevel <= LogLevel.Debug) {
-      this.emit(`[DEBUG] ${chalk.magentaBright(msg)}`)
+      this.emit('DEBUG', chalk.magentaBright(msg));
     }
   }
 
   public info(msg: string) {
     if (this.logLevel <= LogLevel.Info) {
-      this.emit(`[INFO] ${chalk.whiteBright(msg)}`);
+      this.emit('INFO', chalk.whiteBright(msg));
     }
   }
 
   public warn(msg: string): void {
     if (this.logLevel <= LogLevel.Warn) {
-      this.emit(`[WARN] ${chalk.yellow(msg)}`);
+      this.emit('WARN', chalk.yellow(msg));
     }
   }
 
   public error(msg: string): void {
     if (this.logLevel <= LogLevel.Error) {
-      this.emit(`[ERROR] ${chalk.red(msg)}`);
+      this.emit('ERROR', chalk.red(msg));
     }
   }
 
-  private emit(msg: string) {
+  private emit(level: string, msg: string) {
     // Print to the console
-    console.log(msg);
+    console.log(`[${level}] ${msg}`);
 
     // Inform the parent process
     if (process?.send) {
-      process.send(strip(msg));
+      process.send(JSON.stringify({
+        action: 'logging',
+        data: {
+          msg: strip(msg),
+          level,
+        }
+      }));
     }
   }
 }

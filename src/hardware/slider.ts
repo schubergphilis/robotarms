@@ -4,7 +4,6 @@ export class Slider {
   constructor(private connectBox: ConnectBox) {}
 
   public async home(): Promise<unknown> {
-    // await this.connectBox.send('M50', false, false);
     return this.connectBox.send('$H7')
   }
 

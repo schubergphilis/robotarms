@@ -21,7 +21,7 @@ export abstract class EmptyStorageRackSequence {
   static events = new EventEmitter();
 
   static async run(arm: RobotArm, slider: Slider): Promise<void> {
-    logger.info('Starting storage rack sequence');
+    logger.info('Starting empty storage rack sequence');
     this.events.emit(Events.STARTED);
 
     // Create an array with indexes and shuffle them
@@ -37,7 +37,7 @@ export abstract class EmptyStorageRackSequence {
     }
 
     // Signal that we are done
-    logger.info('Finished storage rack sequence');
+    logger.info('Finished empty storage rack sequence');
     this.events.emit(Events.FINISHED);
   }
 

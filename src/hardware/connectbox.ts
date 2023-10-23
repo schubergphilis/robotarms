@@ -154,9 +154,9 @@ export class ConnectBox {
       // Verify the box is not in Hold state before starting
       box.statusEmitter.once('status', (status: IStatus) => {
         if (status.state === State.HOLD) {
-          reject(`Box: ${box.config.name} is in Hold state, please press reset on the arm and then restart`);
+          reject(`${box.config.name} is in Hold state, please press reset on the arm and then restart`);
         } else {
-          logger.info(`Box: ${box.config.name} is ready`);
+          logger.info(`${box.config.name} is ready`);
           resolve(box);
         }
       });
@@ -169,7 +169,7 @@ export class ConnectBox {
 
   private sendToClient(data: string, silent = false) {
     if (!silent) {
-      logger.debug(`[${this.config.name}] ${data}`)
+      logger.debug(`${this.config.name} command: ${data}`)
     }
 
     return this.client.send(data)

@@ -30,8 +30,8 @@ import { ColorCamera } from './hardware/color-camera';
   // On exit of the process, at least turn off the suction cups
   process.on('SIGINT', () => {
     logger.debug('Received SIGINT, exiting....');
-    boxOne.client.send('M3 S0', true); // Turns off the suction cup
-    boxTwo.client.send('M3 S0', true);
+    boxOne.client.send('M3 S0'); // Turns off the suction cup
+    boxTwo.client.send('M3 S0');
     process.exit();
   })
 

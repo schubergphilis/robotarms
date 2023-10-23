@@ -1,5 +1,6 @@
 import express, { Express } from 'express';
 import expressWs from 'express-ws';
+import { RawData } from 'ws';
 import { join } from 'path';
 import { fork, ChildProcess } from 'node:child_process';
 import { v4 as uuid } from 'uuid';
@@ -12,6 +13,12 @@ enum Status {
   STOPPED = 'Stopped'
 }
 
+interface ISocketMessage {
+  action: string;
+  data?: unknown;
+}
+
+
 const baseApp: Express = express();
 const { app } = expressWs(baseApp)
 baseApp.use(express.static(join(__dirname, 'web')));
@@ -21,6 +28,13 @@ let controller: AbortController | undefined;
 let childProcess: ChildProcess | undefined;
 const listeners: Record<string, unknown> = {};
 
+function sendToSocket(msg: ISocketMessage) {
+  for (const listener in listeners) {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    (listeners[listener] as WebSocket).send(JSON.stringify(msg));
+  }
+}
+
 
 function startSubprocess() {
   if (!controller && !childProcess) {
@@ -29,22 +43,18 @@ function startSubprocess() {
     childProcess = fork(join(__dirname, './process.js'), ['child'], { signal });
 
     childProcess.on('close', () => {
-      status = Status.STOPPED;
       clearSubprocess();
     })
     childProcess.on('exit', () => {
-      status = Status.STOPPED;
       clearSubprocess();
     })
     childProcess.on('error', () => {
-      clearSubprocess();
-      status = Status.ERROR;
+      clearSubprocess(Status.ERROR);
     })
     childProcess.on('message', (msg) => {
-      for (const listener in listeners) {
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        (listeners[listener] as WebSocket).send(msg.toString());
-      }
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/no-unsafe-assignment
+      const data: ISocketMessage = JSON.parse(msg.toString());
+      sendToSocket(data);
     })
 
     status = Status.RUNNING;
@@ -53,63 +63,39 @@ function startSubprocess() {
   }
 }
 
-function clearSubprocess() {
+function clearSubprocess(status?: Status) {
   controller = undefined;
   childProcess = undefined;
-  status = Status.STOPPED;
+  status = status ?? Status.STOPPED;
 }
 
 function stopSubprocess() {
   if (controller && childProcess) {
     controller.abort();
     clearSubprocess();
-  } else {
-    throw new Error('No process running');
   }
 }
 
-// Starts the subprocess for the robot arms
-app.get('/start', (_, res) => {
-  console.log('[Server] Received start request');
-  try {
-    startSubprocess();
-    res.send('Started!');
-  } catch (e: unknown) {
-    console.log(e);
-    res.status(500).send(e);
-  }
-});
-
-// Stops the subprocess for the robot arms
-app.get('/stop', (_, res) => {
-  console.log('[Server] Received stop request');
-  try {
-    stopSubprocess();
-    res.send('Stopped!');
-  } catch (e: unknown) {
-    res.status(500).send(e);
-  }
-});
-
-// Returns the current status of the process
-app.get('/status', (_, res) => {
-  res.send({ status })
-});
-
-app.get('/kill', (_, res) => {
-  if (childProcess) {
-    childProcess.send('emergency-stop')
-    status = Status.STOPPED;
-    res.send('Stopped!');
-  } else {
-    res.status(400).send('No process running at the moment');
-  }
-});
-
-app.ws('/logging', (ws) => {
+// Setup the websocket connection
+app.ws('/socket', (ws) => {
   const id = uuid();
   listeners[id] = ws;
   ws.on('close', () => { delete listeners[id]; });
+  ws.on('message', (data: RawData) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/no-unsafe-assignment
+    const msg: ISocketMessage = JSON.parse(data.toString());
+
+    if (msg.action === 'start') {
+      startSubprocess();
+    } else if (msg.action === 'stop') {
+      stopSubprocess();
+    }
+  });
+
+  ws.send(JSON.stringify({
+    action: 'status',
+    status,
+  }))
 });
 
 process.on('beforeExit', () => {

@@ -16,7 +16,7 @@ export abstract class Storage {
     const column = Storage.calculateColumn(index);
 
     // +1 zero based vs one based, one based is more readable for humans ;)
-    logger.info(`[Storage] Retrieving item on row: ${row + 1} and in column: ${column + 1}`);
+    logger.info(`Retrieving item on row: ${row + 1} and in column: ${column + 1}`);
 
     // Move arm and slider to pick up position
     await arm.goToCoordinateAbsolute({ ...pickupPosition, Z: Storage.calculateHeightPosition(row)});
@@ -33,7 +33,7 @@ export abstract class Storage {
     const row = Storage.calculateRow(index);
     const column = Storage.calculateColumn(index);
 
-    logger.info(`[Storage] Storing item on row: ${row + 1} and in column: ${column + 1}`);
+    logger.info(`Storing item on row: ${row + 1} and in column: ${column + 1}`);
 
     // Move arm and slider to drop off position
     await slider.moveTo(Storage.calculateSliderPosition(column));

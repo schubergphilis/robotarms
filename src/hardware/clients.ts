@@ -24,15 +24,15 @@ export class NetClient implements IClient {
     // this.events = this.client;
 
     this.client.on('close', () => {
-      logger.error(`[NetClient] Connection closed for host: ${this.config.host} and ${this.config.port}`);
+      logger.error(`Connection closed for host: ${this.config.host} and ${this.config.port}`);
     })
 
     this.client.on('drop', () => {
-      logger.error(`[NetClient] Connection dropped for host: ${this.config.host} and ${this.config.port}`);
+      logger.error(`Connection dropped for host: ${this.config.host} and ${this.config.port}`);
     })
 
     this.client.on('error', (error) => {
-      logger.error('[NetClient] An error occured');
+      logger.error(`An error occured connecting to host: ${this.config.host} on port: ${this.config.port}`);
       console.error(error);
     })
 
@@ -41,9 +41,9 @@ export class NetClient implements IClient {
 
   public connect(): Promise<void> {
     return new Promise((resolve) => {
-      logger.debug(`[NetClient] Connecting to: ${this.config.host} on port: ${this.config.port}`);
+      logger.debug(`Connecting to: ${this.config.host} on port: ${this.config.port}`);
       this.client.connect(this.config.port, this.config.host, () => {
-        logger.debug(`[NetClient] Connected to: ${this.config.host} on port: ${this.config.port}`);
+        logger.info(`Connected to: ${this.config.host} on port: ${this.config.port}`);
         resolve();
       })
     })
@@ -68,11 +68,11 @@ export class SerialClient implements IClient {
     this.events = this.port.pipe(new DelimiterParser({ delimiter: '\n' }));
 
     this.port.on('error', () => {
-      throw new Error(`[SerialClient] Error occured: ${this.config.path}`)
+      throw new Error(`Error occured connecting to: ${this.config.path}`)
     });
 
     this.port.on('close', () => {
-      throw new Error(`[SerialClient] Connection closed for: ${this.config.path}`)
+      throw new Error(`Connection closed for: ${this.config.path}`)
     });
   }
 
