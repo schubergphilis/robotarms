@@ -104,7 +104,7 @@
       </div>
     </div>
 
-    <textarea id="terminal" readonly>> Webserver started</textarea>
+    <textarea id="terminal" readonly></textarea>
 
 
     <script>
@@ -122,20 +122,6 @@
         WARN: document.getElementById('loglevel-warn'),
         ERROR: document.getElementById('loglevel-error'),
       }
-
-      // Connect to the websocket to exhange information
-      const socket = new WebSocket(`${window.origin}/socket`);
-
-      // When receiving a message from the server deal with it
-      socket.addEventListener('message', (event) => {
-        const msg = JSON.parse(event.data);
-
-        if (msg.action === 'logging') {
-          printLogging(msg.data.level, msg.data.msg);
-        } else if (msg.action === 'status') {
-          updateStatus(msg.data);
-        }
-      });
 
       function printLogging(level, msg) {
         if (checkboxes[level]?.checked) {
@@ -155,6 +141,38 @@
         }
       }
 
+      // Re-usable socket
+      let socket;
+
+      function connectSocket() {
+        socket = new WebSocket(`${window.origin}/socket`);
+
+        // When receiving a message from the server deal with it
+        socket.addEventListener('message', (event) => {
+          const msg = JSON.parse(event.data);
+
+          if (msg.action === 'logging') {
+            printLogging(msg.data.level, msg.data.msg);
+          } else if (msg.action === 'status') {
+            updateStatus(msg.data);
+          }
+        });
+
+        socket.addEventListener('open', (event) => {
+          printLogging('INFO', 'Websocket connected');
+        })
+
+        socket.addEventListener('close', () => {
+          setTimeout(() => {
+            printLogging('ERROR', 'Lost connection to websocket, trying to reconnect in 1 second');
+            connectSocket();
+          }, 1000);
+        });
+      }
+
+      connectSocket();
+
+      // Setup buttons
       startButton.addEventListener("click", (event) => {
         // printLogging('Requested to start sorting process');
         socket.send(JSON.stringify({
