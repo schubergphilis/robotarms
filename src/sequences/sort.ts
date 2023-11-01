@@ -82,7 +82,7 @@ export abstract class SortSequence {
   static waitForIdle(): Promise<void> {
     // Should maybe add an timeout here in the future for resiliance
     return new Promise((resolve) => {
-      if (this.state === SortSequenceState.IDLE) {
+      if (SortSequence.state === SortSequenceState.IDLE) {
         resolve()
       } else {
         this.events.once(SortSequenceEvents.FINISHED, resolve);

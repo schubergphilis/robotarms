@@ -38,7 +38,7 @@ import { ColorCamera } from './hardware/color-camera';
   // When ready to drop the block, check if the other arm/belt/sequence is ready for it
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.READY_TO_DROP, async () => {
     logger.info('Ready to drop block, waiting for confirmation');
-    await boxTwo.waitForIdle();
+    await SortSequence.waitForIdle();
     logger.info('Dropping block');
     EmptyStorageRackSequence.events.emit(EmptyStorageRackSequenceEvents.DROP_BLOCK);
   });
