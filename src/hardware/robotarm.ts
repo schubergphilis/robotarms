@@ -43,15 +43,15 @@ export class RobotArm {
   }
 
   public turnOnSuctionCup() {
-    return this.connectBox.send('M3 S1000', false);
+    return this.connectBox.send('M3 S1000', true);
   }
 
   public turnOnBlowSuctionCup() {
-    return this.connectBox.send('M3 S500', false);
+    return this.connectBox.send('M3 S500', true);
   }
 
   public turnOffSuctionCup() {
-    return this.connectBox.send('M3 S0', false);
+    return this.connectBox.send('M3 S0', true);
   }
 
   public async home() {
