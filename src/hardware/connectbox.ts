@@ -71,6 +71,8 @@ export class ConnectBox {
   public statusEmitter = new EventEmitter();
   private okEmitter = new EventEmitter();
 
+  private previousCommand = '';
+
   constructor(private config: ISerialConfig | INetConfig, private logCommands = false) {
     if ('path' in config) {
       this.client = new SerialClient(config);
@@ -104,7 +106,10 @@ export class ConnectBox {
     return new Promise((resolve, reject) => {
       // Current state is no
       if (this.status && this.status.state !== State.IDLE && this.status.state !== State.ALARM) {
-        reject('Current state is not Idle, did you wait for the previous command to finish?');
+        const msg = 'Current state is not Idle, did you wait for the previous command to finish?';
+        logger.error(msg)
+        logger.error(`Tried running command: ${cmd} before finishing previous command: ${this.previousCommand}`);
+        reject(msg);
       } else if (wait === true) {
         // Start polling for status updates
         const interval = setInterval(() => {
@@ -118,11 +123,14 @@ export class ConnectBox {
         })
 
         // Send the command
+        this.previousCommand = cmd;
         this.sendToClient(cmd, !this.logCommands);
       } else if (wait === false && waitForConfirmation === true) {
         this.okEmitter.once('ok', resolve);
+        this.previousCommand = cmd;
         this.sendToClient(cmd, !this.logCommands);
       } else if (wait === false && waitForConfirmation === false) {
+        this.previousCommand = cmd;
         this.sendToClient(cmd, !this.logCommands);
         resolve()
       }
