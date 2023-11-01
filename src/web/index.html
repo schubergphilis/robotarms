@@ -76,6 +76,43 @@
         font-size: 12px;
       }
 
+      main {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+      }
+
+      #left-main {
+        width: 50%;
+      }
+
+      #right-main {
+        width: 50%;
+        padding: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-spacing: 10px;
+      }
+
+      table td {
+        height: 40px;
+        background-color: rgba(0, 0, 0, 0.4)
+      }
+
+      tr td:nth-child(1).filled {
+        background-color: red;
+      }
+
+      tr td:nth-child(2).filled {
+        background-color: blue;
+      }
+
+      tr td:nth-child(3).filled {
+        background-color: green;
+      }
+
     </style>
   </head>
   <body>
@@ -86,7 +123,6 @@
     <div class="actions">
       <button id="start-button" disabled="disabled">Start</button>
       <button id="stop-button">Stop</button>
-
       <div class="loglevels">
         <div>
           <input type="checkbox" id="loglevel-debug" />
@@ -106,8 +142,41 @@
         </div>
       </div>
     </div>
+    <main>
+      <div id="left-main">
+        <textarea id="terminal" readonly></textarea>
+      </div>
+      <div id="right-main">
 
-    <textarea id="terminal" readonly></textarea>
+        <table>
+          <tbody>
+            <tr>
+              <td id="redFour"></td>
+              <td id="blueFour"></td>
+              <td id="greenFour"></td>
+            </tr>
+            <tr>
+              <td id="redThree" class="filled"></td>
+              <td id="blueThree"></td>
+              <td id="greenThree"></td>
+            </tr>
+            <tr>
+              <td id="redTwo" class="filled"></td>
+              <td id="blueTwo"></td>
+              <td id="greenTwo"></td>
+            </tr>
+            <tr>
+              <td id="redOne" class="filled"></td>
+              <td id="blueOne" class="filled"></td>
+              <td id="greenOne" class="filled"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div>Sorting Progress</div>
+      </div>
+    </main>
+
 
 
     <script>
@@ -124,6 +193,21 @@
         INFO: document.getElementById('loglevel-info'),
         WARN: document.getElementById('loglevel-warn'),
         ERROR: document.getElementById('loglevel-error'),
+      }
+
+      // Count number of sorted blocks
+      const counters = {
+        red: 0,
+        blue: 0,
+        green: 0,
+      }
+
+      function resetCounters() {
+        counters = {
+          red: 0,
+          blue: 0,
+          green: 0,
+        }
       }
 
       function printLogging(level, msg) {
@@ -159,6 +243,10 @@
           } else if (msg.action === 'status') {
             updateStatus(msg.data);
           }
+
+          if (msg.action === 'logging' && msg.data.msg.startsWith('Detected:')) {
+            console.log('color update received: ', msg.data.msg.split('Detected: '));
+          }
         });
 
         socket.addEventListener('open', (event) => {
@@ -177,6 +265,8 @@
 
       // Setup buttons
       startButton.addEventListener("click", (event) => {
+        resetCounters();
+
         // printLogging('Requested to start sorting process');
         socket.send(JSON.stringify({
           action: 'start'
@@ -184,6 +274,8 @@
       });
 
       stopButton.addEventListener("click", () => {
+        resetCounters();
+
         // printCommand('Requested to stop sorting process');
         socket.send(JSON.stringify({
           action: 'stop'

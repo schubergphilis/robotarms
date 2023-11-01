@@ -75,7 +75,7 @@ import { ColorCamera } from './hardware/color-camera';
 
     SortSequence.waitForIdle()
       .then(() => {
-        logger.info('Finished sorting, all done');
+        logger.info('Finished sorting, please put all the blocks back in the storage rack and restart');
         process.exit();
       })
   })
