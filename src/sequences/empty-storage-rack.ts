@@ -5,8 +5,8 @@ import { logger } from '../logger';
 import { Storage } from "../helpers/storage";
 import { wait } from '../utils';
 
-const columnCount = 6;
-const rowCount = 2;
+const columnCount = 2;
+const rowCount = 1;
 const pickupPosition = { X: 198, Y: 0, Z: 42, A: 0, B: -90, C: 0};
 
 export enum Events {

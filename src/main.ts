@@ -4,6 +4,7 @@ import { RawData } from 'ws';
 import { join } from 'path';
 import { fork, ChildProcess } from 'node:child_process';
 import { v4 as uuid } from 'uuid';
+import { logger } from './logger';
 
 enum Status {
   RUNNING = 'Running',
@@ -54,6 +55,8 @@ const state = {
 
 function startSubprocess() {
   if (!controller && !childProcess) {
+    logger.info('Start command received');
+
     controller = new AbortController();
     const { signal } = controller;
     childProcess = fork(join(__dirname, './process.js'), ['child'], { signal });
@@ -89,6 +92,7 @@ function clearSubprocess(status?: Status) {
 
 function stopSubprocess() {
   if (controller && childProcess) {
+    logger.info('Stop command received');
     controller.abort();
     clearSubprocess();
   }

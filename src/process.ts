@@ -11,11 +11,6 @@ import { ColorCamera } from './hardware/color-camera';
 (async () => {
   logger.setLogLevel(LogLevel.Debug)
 
-  // Use serial connections
-  // const boxOne = await ConnectBox.create({ path: '/dev/tty.usbserial-14310', baudRate: 115200 });
-  // const boxTwo = await ConnectBox.create({ path: '/dev/tty.usbserial-14210', baudRate: 115200 });
-  // const colorDetectionCamera = await ColorDetectionCamera.create({ path: '/dev/tty.usbmodem326B376834301', baudRate: 19200 });
-
   // Use network connections
   const boxOne = await ConnectBox.create({ host: '10.22.0.121', port: 3000, name: 'Box 1' }, true);
   const boxTwo = await ConnectBox.create({ host: '10.22.0.122', port: 3000, name: 'Box 2' }, true);
@@ -75,8 +70,14 @@ import { ColorCamera } from './hardware/color-camera';
 
   // Once finished, exit the process
   EmptyStorageRackSequence.events.on(EmptyStorageRackSequenceEvents.FINISHED, () => {
-    logger.info('Finished storage rack sequence');
-    process.exit();
+    logger.info('Finished emptying the storage rack');
+    logger.info('Waiting for last storting sequence to finish');
+
+    SortSequence.waitForIdle()
+      .then(() => {
+        logger.info('Finished sorting, all done');
+        process.exit();
+      })
   })
 
   // Start emptying the rack

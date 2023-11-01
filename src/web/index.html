@@ -141,11 +141,9 @@
         statusText.textContent = status;
 
         if (status === 'Running') {
-          startbutton.disabled = true;
-          stopButton.disabled = false;
+          startButton.disabled = true;
         } else {
           startButton.disabled = false;
-          stopButton.disabled = true;
         }
       }
 
