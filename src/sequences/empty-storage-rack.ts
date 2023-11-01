@@ -3,7 +3,6 @@ import { Axis, RobotArm } from "../hardware/robotarm";
 import { EventEmitter } from 'events';
 import { logger } from '../logger';
 import { Storage } from "../helpers/storage";
-import { wait } from '../utils';
 
 const columnCount = 6;
 const rowCount = 2;
@@ -59,8 +58,6 @@ export abstract class EmptyStorageRackSequence {
 
     // Wait for confirmation to drop the block
     await EmptyStorageRackSequence.waitForDropConfirmation()
-    await arm.turnOnBlowSuctionCup();
-    await wait(500);
     await arm.turnOffSuctionCup()
     await arm.moveAxisRelative(Axis.Z, 35)
     EmptyStorageRackSequence.events.emit(Events.DROPPED);
