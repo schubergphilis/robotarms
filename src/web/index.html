@@ -151,24 +151,24 @@
         <table>
           <tbody>
             <tr>
-              <td id="red4"></td>
-              <td id="blue4"></td>
-              <td id="green4"></td>
+              <td id="redFour"></td>
+              <td id="blueFour"></td>
+              <td id="greenFour"></td>
             </tr>
             <tr>
-              <td id="red3" class="filled"></td>
-              <td id="blue3"></td>
-              <td id="green3"></td>
+              <td id="redThree" class="filled"></td>
+              <td id="blueThree"></td>
+              <td id="greenThree"></td>
             </tr>
             <tr>
-              <td id="red2" class="filled"></td>
-              <td id="blue2"></td>
-              <td id="green2"></td>
+              <td id="redTwo" class="filled"></td>
+              <td id="blueTwo"></td>
+              <td id="greenTwo"></td>
             </tr>
             <tr>
-              <td id="red1" class="filled"></td>
-              <td id="blue1" class="filled"></td>
-              <td id="green1" class="filled"></td>
+              <td id="redOne" class="filled"></td>
+              <td id="blueOne" class="filled"></td>
+              <td id="greenOne" class="filled"></td>
             </tr>
           </tbody>
         </table>
@@ -203,9 +203,11 @@
       }
 
       function resetCounters() {
-        counters.red = 0;
-        counters.blue = 0;
-        counters.green = 0;
+        counters = {
+          red: 0,
+          blue: 0,
+          green: 0,
+        }
       }
 
       function printLogging(level, msg) {
