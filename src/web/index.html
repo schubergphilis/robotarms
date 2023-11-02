@@ -156,22 +156,24 @@
               <td id="green4"></td>
             </tr>
             <tr>
-              <td id="red3"></td>
+              <td id="red3" class="filled"></td>
               <td id="blue3"></td>
               <td id="green3"></td>
             </tr>
             <tr>
-              <td id="red2"></td>
+              <td id="red2" class="filled"></td>
               <td id="blue2"></td>
               <td id="green2"></td>
             </tr>
             <tr>
-              <td id="red1"></td>
-              <td id="blue1"></td>
-              <td id="green1"></td>
+              <td id="red1" class="filled"></td>
+              <td id="blue1" class="filled"></td>
+              <td id="green1" class="filled"></td>
             </tr>
           </tbody>
         </table>
+
+        <div>Sorting Progress</div>
       </div>
     </main>
 
@@ -241,12 +243,7 @@
           }
 
           if (msg.action === 'logging' && msg.data.msg.startsWith('Detected:')) {
-            const color = msg.data.msg.split('Detected: ')[1].toLowerCase();
-            counters[color]++;
-
-            const count = counters[color];
-            document.getElementById(`${color}${count}`).classList.add('filled')
-
+            console.log('color update received: ', msg.data.msg.split('Detected: '));
           }
         });
 
