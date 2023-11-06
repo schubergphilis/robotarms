@@ -8,6 +8,11 @@ import { EventEmitter } from 'events';
  * Maybe the ConnectBox should get a parameter to say whether or not it should poll
  * for this update and parse the result and emit it as an event, not sure it works for now.
  */
+export enum PhotonicEvents {
+  DETECTED = 'DETECTED',
+  UNDETECTED = 'UNDETECTED'
+}
+
 export class PhotonicSensor {
   public detected = false;
   public readonly event = new EventEmitter();
@@ -26,10 +31,10 @@ export class PhotonicSensor {
 
         if (this.detected !== detected && detected)  {
           this.detected = detected;
-          this.event.emit('detected', detected)
+          this.event.emit(PhotonicEvents.DETECTED)
         } else if (this.detected !== detected && !detected) {
           this.detected = detected;
-          this.event.emit('undetected', detected)
+          this.event.emit(PhotonicEvents.UNDETECTED)
         }
       }
     })
