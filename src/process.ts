@@ -25,7 +25,7 @@ import { PhotonicSensor, PhotonicEvents } from './hardware/photonic-sensor';
   // When a block detected, trigger sorting sequence, only when there is no sequence running
   sensor.event.on(PhotonicEvents.DETECTED, async () => {
     if (SortSequence.state === SortSequenceState.IDLE) {
-      await belt.move(500);
+      await belt.move(-500);
       await SortSequence.run(armTwo, belt, camera).catch(() => {
         logger.error('Error occured in sort sequence');
       });
