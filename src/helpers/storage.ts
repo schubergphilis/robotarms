@@ -9,6 +9,7 @@ export abstract class Storage {
   public static readonly columnSpacing = 40.5; // Distance between columns
   public static readonly rowSpacing = 64 // Distance between rows
 
+  // This should be the slider position to pick up the block in the first column
   public static readonly sliderPositionColumnZero = 119;
 
   public static async retrieveItem(arm: RobotArm, slider: Slider, index: number) {
