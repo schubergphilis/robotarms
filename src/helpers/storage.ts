@@ -1,16 +1,16 @@
 import { RobotArm, Slider, Axis } from "../hardware";
 import { logger } from '../logger';
 
-const pickupPosition = { X: 210, Y: 0, Z: 51.5, A: 0, B: -90, C: 0};
+const pickupPosition = { X: 207, Y: 0, Z: 62.8, A: 0, B: -90, C: 0};
 const pickUpDistance = 22;
 
 export abstract class Storage {
   public static readonly columnCount = 6; // Number of columns in the storage rack
-  public static readonly columnSpacing = 40.5; // Distance between columns
+  public static readonly columnSpacing = 39.5; // Distance between columns
   public static readonly rowSpacing = 64 // Distance between rows
 
   // This should be the slider position to pick up the block in the first column
-  public static readonly sliderPositionColumnZero = 119;
+  public static readonly sliderPositionColumnZero = 118.5;
 
   public static async retrieveItem(arm: RobotArm, slider: Slider, index: number) {
     const row = Storage.calculateRow(index);
